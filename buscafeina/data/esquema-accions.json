@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/esquema-accions-buscafeina.json",
+  "title": "Accions de buscafeina",
+  "description": "Esquema del fitxer accions.json. Cada entrada declara una acció predefinida: què fa, des de quins subcomandaments es pot llançar, si és destructiva, si necessita la IA i quins paràmetres rep. Afegir una entrada = afegir una acció sense tocar codi.",
+  "type": "object",
+  "required": ["esquema", "accions"],
+  "additionalProperties": false,
+  "properties": {
+    "esquema": {
+      "type": "integer",
+      "description": "Versió de l'esquema. Hui és 1.",
+      "const": 1
+    },
+    "accions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/accio" }
+    }
+  },
+  "$defs": {
+    "accio": {
+      "type": "object",
+      "required": ["nom", "describe", "efecte", "comandos"],
+      "additionalProperties": false,
+      "properties": {
+        "nom": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$",
+          "description": "Identificador únic, en minúscules i guions (p. ex. tot-el-dia)."
+        },
+        "describe": {
+          "type": "string",
+          "minLength": 4,
+          "description": "El que es mostra a buscafeina accions i en els avisos."
+        },
+        "efecte": {
+          "enum": ["cerca", "exportar", "avaluar", "filtrar", "neteja", "moure"],
+          "description": "Classe del motor que s'executa (buscafeina/acciones.py)."
+        },
+        "comandos": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["cerca", "avalua", "neteja", "tot"] },
+          "description": "Subcomandaments des d'on es pot executar esta acció."
+        },
+        "ordre": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Posició dins la seqüència del comando (per defecte 50)."
+        },
+        "destructiva": {
+          "type": "boolean",
+          "description": "Si esborra o mou fitxers: cal --simulacio, --si o confirmació."
+        },
+        "requereix_ia": {
+          "type": "boolean",
+          "description": "Si usa el proveïdor d'IA. Sense IA, l'acció se salta amb avís."
+        },
+        "simulable": {
+          "type": "boolean",
+          "description": "Si accepta --simulacio (per defecte, true)."
+        },
+        "despres": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Noms d'accions que s'encadenen automàticament després d'esta."
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "per_defecte": {},
+              "permesos": { "type": "array" }
+            }
+          },
+          "description": "Paràmetres amb valor per defecte i valors permesos (directori, formats, perfil, model, limit, dies, portals)."
+        }
+      }
+    }
+  }
+}

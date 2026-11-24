@@ -1,159 +1,178 @@
 # buscafeina
 
-CLI per a buscar feina des del terminal, en valencià, amb quatre cercadors:
-
-- **Labora** (Servei Valencià d'Ocupació — Punt Labora)
-- **InfoJobs**
-- **Pacte Comarcal** per a l'Ocupació
-- **LinkedIn**
-
-La CLI et pregunta els criteris (tipus de treball, localitat, tipus de
-contracte, tipus de torn, horari i tipus de jornada) i fa dues coses:
-
-1. **Mostra resultats al terminal** quan el portal ho permet (LinkedIn,
-   InfoJobs).
-2. Si un portal no permet lectura automàtica (Labora, Pacte Comarcal), fa
-   **fallback**: obre el navegador amb la cerca i t'indica quins filtres
-   has de triar al formulari.
+CLI per a buscar, avaluar i ordenar ofertes de feina des del terminal, en
+valencià. Consultes a quatre cercadors (Labora, InfoJobs, Pacte Comarcal i
+LinkedIn), accions predefinides definides en un JSON extern, IA local (Ollama)
+per a puntuar ofertes, i mode simulació per a tot.
 
 ## Instal·lació
 
+Amb `uv` (recomanat) o `pipx`, des del repositori de GitHub:
+
 ```powershell
-cd proyecto-cli
-python -m pip install -e .
+uv tool install git+https://github.com/TU-USUARI/proyecto-cli.git
+# o bé: pipx install git+https://github.com/TU-USUARI/proyecto-cli.git
+buscafeina accions          # queda disponible com a comando en qualsevol carpeta
 ```
+
+En mode desenvolupament, des d'una còpia local:
+
+```powershell
+git clone https://github.com/TU-USUARI/proyecto-cli.git && cd proyecto-cli
+pip install -e ".[dev]"
+```
+
+Requereix Python ≥ 3.10. Depèn de `requests`, `rich`, `questionary`,
+`beautifulsoup4` i `jsonschema`.
 
 ## Ús
 
 ```powershell
-buscafeina
+buscafeina cerca -k "cambrer/a" -l "València" --guardar ambdos --no-browser
+buscafeina tot   -k fuster -l Xàtiva --limit 15          # cerca + exporta + avalua
+buscafeina avalua                                        # el fitxer més recent de resultats/
+buscafeina avalua resultats/feina-panadero-valencia-20261110-1403.csv --filtrar
+buscafeina neteja --simulacio                            # què esborraria (no res)
+buscafeina neteja --si                                   # esborra de veritat
+buscafeina accions                                       # les accions definides i el seu esquema
 ```
 
-o bé, sense prompts ( útil per a scripts):
-
-```powershell
-buscafeina -k "cambrer/a" -l "València" --contracte Temporal --jornada Parcial --torn Matí --portals InfoJobs,LinkedIn --limit 5 --no-browser
-```
-
-Opcions:
+Opcions de `cerca`/`tot`:
 
 | Opció | Descripció |
 | --- | --- |
 | `-k, --keyword` | Tipus de treball o paraula clau |
 | `-l, --localitat` | Localitat o província |
-| `--contracte` | Qualsevol / Indefinit / Temporal / Pràctiques / Autònom / Altres |
-| `--jornada` | Qualsevol / Completa / Parcial / Mitja jornada / Per hores |
-| `--torn` | Qualsevol / Matí / Tarda / Nit / Rotatiu |
-| `--horari` | Qualsevol / Horari flexible / Horari partit / Mig horari |
-| `--portals` | Llista separada per comes: `Labora,InfoJobs,Pacte Comarcal,LinkedIn` |
-| `--limit` | Resultats per cercador (per defecte 10) |
-| `--guardar` | Guardar els resultats: `csv`, `json` o `ambdos` (sense valor: `ambdos`) |
-| `--no-browser` | No obrir el navegador; mostra les URLs de cerca |
+| `--contracte` / `--jornada` / `--torn` / `--horari` | Filtres (veure `--help`) |
+| `--portals` | Llista separada per comes (noms validats: error llegible si no) |
+| `--limit` | Resultats per cercador |
+| `--guardar` | `csv`, `json`, `ambdos` o `no` |
+| `--model` / `-p, --perfil` | Model d'IA i perfil per a les accions amb IA |
+| `--simulacio` | Mostra què farien les accions sense cridar la IA ni escriure res |
+| `--si` | Confirma les accions destructives sense preguntar |
+| `--no-browser` | No obrir el navegador: només imprimeix les URLs |
+| `--exec NOM` | Executa només una acció del JSON |
 
-## Com tracta cada portal
+**Portals**: LinkedIn i InfoJobs es llegeixen automàticament; Labora (formulari
+amb sessió DNI/PIN) i Pacte Comarcal no tenen lectura automàtica, i la CLI obrí
+el navegador amb la cerca apuntada (o imprimeix la URL amb `--no-browser`).
+Torn i horari s'incorporen al text de la cerca perquè cap portal té filtre
+natiu.
 
-| Portal | Resultats al terminal | Filtres que s'apliquen |
-| --- | --- | --- |
-| **LinkedIn** | Sí (endpoint públic `jobs-guest`) | paraula clau, localitat, jornada/tipus (`f_JT`) |
-| **InfoJobs** | Sí (HTML o API oficial) | paraula clau, localitat, contracte i jornada |
-| **Labora** | No (formulari amb sessió DNI/PIN) | et duu al cercador amb els criteris apuntats |
-| **Pacte Comarcal** | No (no té cercador unificat) | obre la borsa de la teua comarca |
+## Accions predefinides (`accions.json`)
 
-**Torn i horari**: cap dels portals grans té filtre natiu de torn o horari,
-així que la CLI els incorpora al text de la cerca (p. ex. «cambrer/a torn de
-nit»).
+Les accions **no estan escrites a mà al codi**: viuen en un fitxer JSON que
+pots editar tu. Ordre de cerca: variable `BUSCAFEINA_ACCIONS` →
+`./accions.json` → `~/.buscafeina/accions.json` → exemple inclòs en el paquet
+(`buscafeina/data/accions.json`). El fitxer es valida **abans d'executar
+res** contra `buscafeina/data/esquema-accions.json`; un error diu la ruta
+exacta del camp (`accions/0/efecte: 'palla' is not one of [...]`), mai un
+traceback.
 
-## Guardar els resultats
+### Esquema (resum)
 
-Tres maneres:
-
-```powershell
-# Al final de la cerca interactiva et preguntarà si vols guardar
-buscafeina
-
-# Directament amb la opció (csv, json o ambdos)
-buscafeina -k "cambrer/a" -l "València" --guardar ambdos
-
-# Sense obrir el navegador
-buscafeina -k "panadero" -l "València" --guardar csv --no-browser
-```
-
-Els fitxers es creen a la carpeta `resultats/` amb el nom de la cerca i la
-data, per exemple `resultats/feina-panadero-valencia-20261110-1032.csv`:
-
-- **CSV**: amb codificació `utf-8-sig` i separador `;`, a punt d'obrir amb
-  doble clic a Excel o LibreOffice.
-- **JSON**: llista d'ofertes amb tots els camps, útil per a tractar-les
-  després amb Python.
-
-En ambdós formats també es guarden els portals que no permeten lectura
-automàtica (Labora, Pacte Comarcal) amb la seua URL de cerca per a obrir-los
-més tard.
-
-## Avaluar les ofertes amb IA local (Ollama)
-
-Si tens [Ollama](https://ollama.com) instal·lat, pots fer que un model
-local — que no ix a internet i és gratuït — puntuï les ofertes guardades
-segons el teu perfil:
-
-```powershell
-ollama pull qwen3                # primer, descarrega el model (~5 GB)
-
-buscafeina avalua                # avalua el fitxer més recent de resultats/
-buscafeina avalua resultats/feina-panadero-valencia-20261110-1403.csv
-buscafeina avalua -p "2 anys d'experiència en forneria, busque jornada completa a la Safor"
-buscafeina avalua -m qwen3:4b    # model alternatiu
-```
-
-Per a cada oferta, el model dona una **puntuació de 0 a 10** i un motiu breu
-en valencià. Les ofertes queden ordenades i es guarden a
-`resultats/avaluades-<data>.csv`.
-
-El perfil habitual es pot deixar fixat a `~/.buscafeina/config.json`:
-
-```json
+```jsonc
 {
-  "model_ollama": "qwen3",
-  "perfil": "experiència en forneria i hostaleria, busque a la Safor"
+  "esquema": 1,
+  "accions": [
+    {
+      "nom": "avaluar-perfil",          // id únic, minúscules i guions
+      "describe": "Puntua ofertes 0-10",// què es mostra a `buscafeina accions`
+      "efecte": "avaluar",              // cerca | exportar | avaluar | filtrar | neteja | moure
+      "comandos": ["avalua", "tot"],    // des d'on es pot executar
+      "ordre": 30,                      // posició a la seqüència (opcional, 50)
+      "destructiva": false,             // esborra/mou: cal --simulacio o --si
+      "requereix_ia": true,             // sense IA se salta amb avís, no trunca
+      "simulable": true,                // accepta --simulacio (per defecte, sí)
+      "despres": ["exportar-fitxers"],  // encadenables: ací combinem accions
+      "params": { "perfil": { "per_defecte": "" } }
+    }
+  ]
 }
 ```
 
-## Configuració
+Efectes disponibles (cada un és una classe en `buscafeina/acciones.py`):
 
-El fitxer `~/.buscafeina/config.json` (es crea automàticament) permet:
+| Efecte | Què fa |
+| --- | --- |
+| `cerca` | Consulta els portals i ompli el context d'ofertes |
+| `exportar` | Guarda les ofertes del context en CSV/JSON |
+| `avaluar` | Puntua 0-10 amb IA i escriu el rànquing |
+| `filtrar` | Descarta amb IA les ofertes que no encaixen |
+| `neteja` | Esborra fitxers de resultats vells (**destructiva**) |
+| `moure` | Arxiva els fitxers de la sessió (**destructiva**) |
+
+**Afegir una acció no exigeix tocar el codi**: copia una entrada, canvia
+`nom`, `comandos`, `despres` i `params`, i ja eixix en `buscafeina accions`
+i en els comandaments que hages dit. La justificació d'este disseny i les
+alternatives descartades estan en [`docs/adr/ADR-001`](docs/adr/ADR-001-configuracio-externa.md).
+
+## IA i secrets
+
+La capa d'IA (`buscafeina/ia.py`) te dos proveïdors, triats a
+`~/.buscafeina/config.json` amb `proveidor_ia`:
+
+- **`ollama`** (per defecte): model local, sense claus, sense eixida a
+  internet. `ollama pull qwen3` i llestos.
+- **`openai`**: qualsevol endpoint compatible amb `/chat/completions`
+  (`openai_base_url`). La clau es llig de la variable d'entorn que indique
+  `openai_api_key_env` (per defecte `OPENAI_API_KEY`) o d'un fitxer `.env` en
+  la carpeta actual.
+
+`.env` està en `.gitignore` des del primer commit i `.env.example` documenta
+les variables. **No hi ha cap clau en el codi ni en la història del repositori**
+(podeu verificar-ho amb `git log -p -S API_KEY`).
+
+**Sin red o sin Ollama**, la CLI no es trenca: les accions amb IA se salten
+amb un missatge que explica què falta i el resto de la seqüència (cerca,
+exportar, neteja) funciona igualment. També tens `--simulacio` per a veure
+tot el pla sense IA.
+
+## Configuració (`~/.buscafeina/config.json`)
 
 ```json
 {
   "pacte_comarcal_url": "https://example.org/borsa-de-la-meva-comarca",
   "resultats_per_cercador": 10,
-  "model_ollama": "qwen3",
+  "directori_resultats": "resultats",
+  "proveidor_ia": "ollama",
+  "model_ia": "qwen3",
+  "ollama_url": "http://localhost:11434",
   "perfil": "experiència en forneria, busque a la Safor"
 }
 ```
 
-Pots trobar el pacte de la teua comarca a
-[Avalem Territori](https://avalemterritori.es/acords-territorials/pactes-per-locupacio/)
-i posar-ne la URL de la borsa d'ocupació.
+Els tipus es validen: un número on va text produeix
+`~/.buscafeina/config.json · «resultats_per_cercador» ha de ser un nombre enter`, no un comportament aleatori.
 
-### InfoJobs via API (opcional, recomanat)
-
-Per a resultats d'InfoJobs més fiables i amb filtres complets, registra una
-aplicació gratuïta a [developer.infojobs.net](https://developer.infojobs.net)
-i exporta:
+## Proves
 
 ```powershell
-$env:INFOJOBS_CLIENT_ID = "el-teu-id"
-$env:INFOJOBS_CLIENT_SECRET = "el-teu-secret"
+pip install -e ".[dev]"
+pytest tests -v
 ```
 
-Sense aquestes variables, la CLI intenta llegir la pàgina de resultats i, si
-el portal la bloqueja, cau al navegador. Tingues en compte que, en mode de
-rascat i sense API, el filtre de localitat no es pot aplicar de manera
-fiable (el mateix InfoJobs l'aplica al navegador); la CLI t'ho advertirà.
+27 proves amb pytest, **totes en carpetes temporals** (`tmp_path`) — mai sobre
+ficheros reales:
+
+- Camí feliç: càrrega de l'`accions.json` de exemple, cerca en simulació,
+  exportació que informa del fitxer creat, neteja simulada, configuració vàlida,
+  parseig de respostes brutes de la IA.
+- Casos feos: JSON roto, JSON amb camps que falten o efectes inventats, config
+  amb tipus equivocat, portal desconegut, acció destructiva sense confirmar
+  (fitxers intactes), IA no disponible (se salta, no trunca), colisions de nom
+  en moure fitxers, model que no torna JSON.
+- Les proves no tenen red: un proveïdor d'IA simulat se n'encarrega.
+
+El workflow de GitHub Actions (`.github/workflows/ci.yml`) instal·la el paquet
+des del repo, comprova que `buscafeina --help` funcion i executat `pytest` en
+Python 3.10 y 3.12 a cada push i PR.
 
 ## Limitacions
 
-- LinkedIn i InfoJobs reserven el dret de bloquejar l'accés automatitzat;
-  aquesta CLI n'usa només endpoints públics i sempre ofereix el fallback al
-  navegador. Feu-ne un ús personal i moderat.
-- Labora requereix DNI + PIN per a postular-se; la CLI no guarda credencials.
+- LinkedIn i InfoJobs poden bloquejar l'accés automatitzat; aquesta CLI usa
+  només endpoints públics i sempre ofereix el fallback al navegador. Ús
+  personal i moderat.
+- Labora requereix DNI + PIN; la CLI no guarda credencials.
+- La qualitat de l'avaluació depèn del model local; amb models chiquets el
+  format JSON pot tindre soroll — el parseig el tolera, i si no, avisar.

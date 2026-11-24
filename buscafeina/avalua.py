@@ -1,31 +1,34 @@
-"""Avaluació d'ofertes guardades amb un model local d'Ollama.
+"""Avaluació d'ofertes amb IA (subcomandament `buscafeina avalua`).
 
 Ús:
-    buscafeina avalua                          # avalua el fitxer més recent
-    buscafeina avalua resultats/fitxer.csv     # avalua un fitxer concret
-    buscafeina avalua -p "2 anys d'experiència en forneria" --model qwen3
+    buscafeina avalua                          # el fitxer més recent
+    buscafeina avalua resultats/fitxer.csv     # un fitxer concret
+    buscafeina avalua -p "2 anys en forneria" --model qwen3 --simulacio
+    buscafeina avalua --llistar-accions
+
+La mecànica de l'IA viu a buscafeina/ia.py (proveïdor Ollama local o API
+compatible amb OpenAI, clau només per entorn); este mòdul conté la lògica de
+negoci — puntuar, filtrar i guardar — que també reutilitza el motor d'accions.
 """
 
 import argparse
 import csv
 import json
-import re
 import sys
 from datetime import datetime
 from pathlib import Path
 
-import requests
 from rich.console import Console
 from rich.table import Table
 
 from .config import load_config
+from .errors import BuscafeinaError, IAError
+from .ia import ProveidorIA, extract_json
 
 console = Console()
-OLLAMA_CHAT_URL = "http://localhost:11434/api/chat"
-OLLAMA_TAGS_URL = "http://localhost:11434/api/tags"
 
-SYSTEM_PROMPT = """Ets un conseller d'ocupació. Rebràs una llista d'ofertes de \
-treball numerades i el perfil d'una persona candidata.
+SYSTEM_PROMPT_AVALUAR = """Ets un conseller d'ocupació. Rebràs una llista d'ofertes \
+de treball numerades i el perfil d'una persona candidata.
 Per a cada oferta has de:
 1. Puntuar de 0 a 10 l'adequació per a la persona candidata (10 = encaixa perfecta).
 2. Donar un motiu breu en valencià (màxim 15 paraules).
@@ -35,9 +38,17 @@ forma exacta:
 {"id": 2, "puntuacio": 3, "motiu": "exemple de motiu"}]}
 L'"id" ha de coincidir amb l'id de cada oferta. No inventes ofertes noves."""
 
+SYSTEM_PROMPT_FILTRAR = """Ets un conseller d'ocupació. Rebràs ofertes numerades i \
+el perfil d'una persona candidata. Indica quines ofertes descartaries per \
+incompatibles amb el perfil (per exemple, fora de la comarca que demana, o un \
+lloc per al que no té experiència ni vol formar-se). \
+Respon només amb JSON vàlid amb esta forma:
+{"descartats": [2, 5]}
+Si no en descartaries cap: {"descartats": []}"""
+
 
 def find_latest(directory: str = "resultats") -> Path | None:
-    """El fitxer de resultats més recent (csv o json)."""
+    """El fitxer de resultats més recent (csv o json) o None si no n'hi ha."""
     directory_path = Path(directory)
     if not directory_path.is_dir():
         return None
@@ -48,181 +59,39 @@ def find_latest(directory: str = "resultats") -> Path | None:
     return max(files, key=lambda f: f.stat().st_mtime)
 
 
-def load_offers(path: Path) -> list:
-    """Llig un fitxer de resultats i torna les ofertes vàlides."""
-    if path.suffix == ".json":
-        rows = json.loads(path.read_text(encoding="utf-8"))
-    else:  # csv
-        with open(path, newline="", encoding="utf-8-sig") as f:
-            rows = list(csv.DictReader(f, delimiter=";"))
-    offers = [
-        row for row in rows
-        if row.get("titol") and "(cerca al navegador)" not in row["titol"]
-    ]
-    return offers
+def _simplificada(row: dict, index: int) -> dict:
+    """Oferta plana resumida per al prompte, numerada des d'1."""
+    return {
+        "id": index + 1,
+        "titol": row.get("titol", ""),
+        "empresa": row.get("empresa", ""),
+        "lloc": row.get("lloc", ""),
+        "detalls": row.get("detalls", ""),
+    }
 
 
-def check_ollama(model: str) -> str | None:
-    """Comprova el servidor i el model; torna un missatge d'error o None."""
-    try:
-        response = requests.get(OLLAMA_TAGS_URL, timeout=5)
-        response.raise_for_status()
-    except requests.RequestException:
-        return (
-            "No hi ha cap servidor Ollama al port 11434. "
-            "Inicia Ollama (o executa 'ollama serve') i torna-ho a provar."
-        )
-    installed = [m.get("name", "") for m in response.json().get("models", [])]
-    base_names = {name.split(":")[0] for name in installed}
-    if model not in installed and model not in base_names:
-        return (
-            f"El model '{model}' no està descarregat. "
-            f"Models disponibles: {', '.join(installed) or 'cap'}. "
-            f"Baixa'l amb: ollama pull {model}"
-        )
-    return None
+def puntuar_ofertes(config: dict, model: str | None, ofertes: list[dict], perfil: str) -> list[dict]:
+    """Puntua ofertes (files planes) amb el proveïdor d'IA.
 
-
-def avaluar(model: str, offers: list, perfil: str) -> list:
-    """Envia totes les ofertes en una petició i torna les avaluacions."""
-    simplified = [
-        {
-            "id": index + 1,
-            "titol": row.get("titol", ""),
-            "empresa": row.get("empresa", ""),
-            "lloc": row.get("lloc", ""),
-            "detalls": row.get("detalls", ""),
-        }
-        for index, row in enumerate(offers)
-    ]
-    perfil_text = (
-        perfil
-        or "Cap perfil concret: puntua segons la generalitat de cada oferta."
-    )
+    Torna files amb `puntuacio` i `motiu` sumats als camps originals,
+    ordenades de més a menys puntuació. Llança IAError si el model no
+    respon o el text tornat no és JSON vàlid.
+    """
+    assert ofertes, "puntuar_ofertes rep una llista buida"
+    proveidor = ProveidorIA.from_config(config, model=model)
+    simplified = [_simplificada(row, i) for i, row in enumerate(ofertes)]
     user_prompt = (
-        f"PERFIL DE LA PERSONA CANDIDATA:\n{perfil_text}\n\n"
+        "PERFIL DE LA PERSONA CANDIDATA:\n"
+        f"{perfil or 'Cap perfil concret: puntua segons la generalitat de cada oferta.'}\n\n"
         f"OFERTES:\n{json.dumps(simplified, ensure_ascii=False)}"
     )
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt},
-        ],
-        "stream": False,
-        "format": "json",
-        "think": False,
-        "options": {"temperature": 0.2},
-    }
-    response = requests.post(OLLAMA_CHAT_URL, json=payload, timeout=900)
-    if response.status_code == 400 and "think" in response.text.lower():
-        payload.pop("think")  # models/versions sense suport de 'think'
-        response = requests.post(OLLAMA_CHAT_URL, json=payload, timeout=900)
-    response.raise_for_status()
-    content = response.json()["message"]["content"]
-    return _parse_avaluacions(content)
-
-
-def _parse_avaluacions(content: str) -> list:
-    content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL)
-    try:
-        data = json.loads(content)
-    except json.JSONDecodeError:
-        match = re.search(r"\{.*\}", content, flags=re.DOTALL)
-        if not match:
-            raise ValueError(f"El model no ha tornat JSON: {content[:200]}")
-        data = json.loads(match.group())
-    return data.get("avaluacions", [])
-
-
-def print_avaluades(rows: list) -> None:
-    table = Table(box=None, header_style="bold", show_lines=False)
-    table.add_column("Pts", justify="right", style="bold cyan", width=3)
-    table.add_column("Títol", max_width=46)
-    table.add_column("Empresa", max_width=22)
-    table.add_column("Motiu", max_width=44)
-    for row in rows:
-        score = row["puntuacio"]
-        style = (
-            "green" if score >= 7
-            else "yellow" if score >= 4
-            else "red"
-        )
-        table.add_row(
-            f"[{style}]{score}[/]",
-            row["titol"],
-            row.get("empresa", ""),
-            row.get("motiu", ""),
-        )
-    console.print(table)
-
-
-def save_avaluades(rows: list, directory: str = "resultats") -> Path:
-    out_dir = Path(directory)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    path = out_dir / f"avaluades-{datetime.now().strftime('%Y%m%d-%H%M')}.csv"
-    fields = ["puntuacio", "motiu", "portal", "titol", "empresa", "lloc", "data", "url"]
-    with open(path, "w", newline="", encoding="utf-8-sig") as f:
-        writer = csv.DictWriter(f, fieldnames=fields, delimiter=";")
-        writer.writeheader()
-        writer.writerows(
-            {key: row.get(key, "") for key in fields} for row in rows
-        )
-    return path
-
-
-def main(argv=None) -> None:
-    parser = argparse.ArgumentParser(
-        prog="buscafeina avalua",
-        description="Puntua les ofertes guardades amb un model local d'Ollama.",
-    )
-    parser.add_argument("fitxer", nargs="?", help="CSV/JSON de resultats (per defecte el més recent)")
-    parser.add_argument("-m", "--model", help="model d'Ollama (per defecte el del config)")
-    parser.add_argument("-p", "--perfil", help="perfil del candidat (experiència, preferències…)")
-    parser.add_argument("-d", "--directori", default="resultats", help="carpeta de resultats")
-    args = parser.parse_args(argv)
-
-    config = load_config()
-    model = args.model or config.get("model_ollama", "qwen3")
-    perfil = args.perfil or config.get("perfil", "")
-
-    path = Path(args.fitxer) if args.fitxer else find_latest(args.directori)
-    if not path or not path.exists():
-        console.print(
-            "[red]No hi ha cap fitxer de resultats. Executa primer una cerca "
-            "amb --guardar.[/]"
-        )
-        sys.exit(1)
-
-    offers = load_offers(path)
-    if not offers:
-        console.print(f"[yellow]El fitxer {path} no té ofertes a avaluar.[/]")
-        sys.exit(0)
-
-    error = check_ollama(model)
-    if error:
-        console.print(f"[red]{error}[/]")
-        sys.exit(1)
-
-    console.print(
-        f"Avaluant [bold]{len(offers)}[/] ofertes de [bold]{path.name}[/] amb "
-        f"[bold cyan]{model}[/]…"
-    )
-    try:
-        with console.status("El model està pensant (pot trigar uns minuts)…"):
-            scores = avaluar(model, offers, perfil)
-    except requests.RequestException as e:
-        console.print(f"[red]Error de connexió amb Ollama: {e}[/]")
-        sys.exit(1)
-    except (ValueError, KeyError, json.JSONDecodeError) as e:
-        console.print(f"[red]Resposta inesperada del model: {e}[/]")
-        sys.exit(1)
-
-    by_id = {score.get("id"): score for score in scores}
-    merged = []
-    for index, offer in enumerate(offers):
-        score = by_id.get(index + 1, {})
-        merged.append(
+    content = proveidor.chat(SYSTEM_PROMPT_AVALUAR, user_prompt)
+    data = extract_json(content)
+    per_id = {score.get("id"): score for score in data.get("avaluacions", [])}
+    files = []
+    for index, offer in enumerate(ofertes):
+        score = per_id.get(index + 1, {})
+        files.append(
             {
                 "puntuacio": score.get("puntuacio", "-"),
                 "motiu": score.get("motiu", ""),
@@ -234,11 +103,132 @@ def main(argv=None) -> None:
                 "url": offer.get("url", ""),
             }
         )
-    merged.sort(key=lambda r: r["puntuacio"] if isinstance(r["puntuacio"], (int, float)) else -1, reverse=True)
+    files.sort(
+        key=lambda r: r["puntuacio"] if isinstance(r["puntuacio"], (int, float)) else -1,
+        reverse=True,
+    )
+    return files
+
+
+def filtrar_ofertes(config: dict, model: str | None, ofertes: list[dict], criteri: str) -> list[dict]:
+    """Torna les ofertes que la IA no descarta per al perfil."""
+    assert ofertes, "filtrar_ofertes rep una llista buida"
+    proveidor = ProveidorIA.from_config(config, model=model)
+    simplified = [_simplificada(row, i) for i, row in enumerate(ofertes)]
+    user_prompt = (
+        f"PERFIL: {criteri or '(usa la generalitat)'}\n\n"
+        f"OFERTES:\n{json.dumps(simplified, ensure_ascii=False)}"
+    )
+    content = proveidor.chat(SYSTEM_PROMPT_FILTRAR, user_prompt)
+    data = extract_json(content)
+    descartats = {int(i) for i in data.get("descartats", []) if str(i).isdigit()}
+    return [row for i, row in enumerate(ofertes) if (i + 1) not in descartats]
+
+
+def guardar_avaluades(rows: list, directory: str = "resultats") -> Path:
+    """Escriu el rànquing a un CSV nou (mai sobreescriu: nom amb segell horari)."""
+    out_dir = Path(directory)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / f"avaluades-{datetime.now().strftime('%Y%m%d-%H%M%S')}.csv"
+    fields = ["puntuacio", "motiu", "portal", "titol", "empresa", "lloc", "data", "url"]
+    with open(path, "w", newline="", encoding="utf-8-sig") as f:
+        writer = csv.DictWriter(f, fieldnames=fields, delimiter=";")
+        writer.writeheader()
+        writer.writerows({key: row.get(key, "") for key in fields} for row in rows)
+    return path
+
+
+def print_avaluades(rows: list) -> None:
+    table = Table(box=None, header_style="bold", show_lines=False)
+    table.add_column("Pts", justify="right", style="bold cyan", width=3)
+    table.add_column("Títol", max_width=46)
+    table.add_column("Empresa", max_width=22)
+    table.add_column("Motiu", max_width=44)
+    for row in rows:
+        score = row["puntuacio"]
+        numeric = isinstance(score, (int, float))
+        style = "green" if numeric and score >= 7 else ("yellow" if numeric and score >= 4 else "red")
+        table.add_row(f"[{style}]{score}[/]", str(row["titol"]), row.get("empresa", ""), row.get("motiu", ""))
+    console.print(table)
+
+
+def _parse_args(argv):
+    parser = argparse.ArgumentParser(
+        prog="buscafeina avalua",
+        description="Puntua ofertes amb IA local segons el teu perfil.",
+    )
+    parser.add_argument("fitxer", nargs="?", help="CSV/JSON de resultats (per defecte el més recent)")
+    parser.add_argument("-m", "--model", help="model d'IA (per defecte el del config)")
+    parser.add_argument("-p", "--perfil", help="perfil del candidat/a (experiència, preferències…)")
+    parser.add_argument("-d", "--directori", default="resultats", help="carpeta de resultats")
+    parser.add_argument("--filtrar", action="store_true",
+                        help="a més de puntuar, descarta les que no encaixen")
+    parser.add_argument("--simulacio", action="store_true",
+                        help="mostra què faria sense cridar la IA ni escriure fitxers")
+    parser.add_argument("--llistar-accions", action="store_true",
+                        help="mostra les accions del JSON disponibles per a avalua")
+    return parser.parse_args(argv)
+
+
+def main(argv=None) -> None:
+    args = _parse_args(sys.argv[1:] if argv is None else list(argv))
+
+    if args.llistar_accions:
+        from .accions import cargar_accions, ruta_accions
+
+        data = cargar_accions()
+        console.print(f"Accions de [bold]{ruta_accions()}[/] per a [bold]avalua[/]:")
+        for entry in data["accions"]:
+            if set(entry.get("comandos", [])) & {"avalua", "tot"}:
+                marca = " [dim](necessita IA)[/]" if entry.get("requereix_ia") else ""
+                console.print(f"  [bold]{entry['nom']}[/]{marca} — {entry['describe']}")
+        return
+
+    config = load_config()
+    model = args.model or config.get("model_ia")
+    perfil = args.perfil or config.get("perfil", "")
+
+    path = Path(args.fitxer) if args.fitxer else find_latest(args.directori)
+    if not path or not path.exists():
+        console.print(
+            "[red]No hi ha cap fitxer de resultats. Executa primer una cerca "
+            "amb --guardar (p. ex. buscafeina cerca -k fuster -l València --guardar).[/]"
+        )
+        sys.exit(1)
+
+    from .motor import llegir_ofertes
+
+    ofertes = llegir_ofertes(path)
+    if not ofertes:
+        console.print(f"[yellow]El fitxer {path} no té ofertes reals a avaluar.[/]")
+        sys.exit(0)
+
+    if args.simulacio:
+        proveidor = ProveidorIA.from_config(config, model=model)
+        ok, motiu = proveidor.disponble()
+        console.print(
+            f"[bold]Simulació[/] de l'acció «avaluar-perfil» sobre [bold]{len(ofertes)}[/] "
+            f"ofertes de [bold]{path.name}[/] amb [bold cyan]{proveidor.model}[/]:\n"
+            "  1. Puntuació 0-10 i motiu breu per oferta.\n"
+            f"  2. Rànquing ordenat i guardat a {args.directori}/avaluades-<data>.csv.\n"
+            "  No s'ha cridat la IA ni s'ha escrit res.\n"
+            f"  Proveïdor {'disponible' if ok else 'NO disponible'}: {motiu or 'ok'}"
+        )
+        return
+
+    console.print(f"Avaluant [bold]{len(ofertes)}[/] ofertes de [bold]{path.name}[/]…")
+    try:
+        with console.status("El model està pensant (pot trigar uns minuts)…"):
+            files = puntuar_ofertes(config, model, ofertes, perfil)
+            if args.filtrar:
+                files = filtrar_ofertes(config, model, files, perfil)
+    except (IAError, BuscafeinaError) as error:
+        console.print(f"[red]{error}[/]")
+        sys.exit(error.exit_code)
 
     console.print()
-    print_avaluades(merged)
-    saved = save_avaluades(merged)
+    print_avaluades(files)
+    saved = guardar_avaluades(files, directory=args.directori)
     console.print(f"\n[green]Resultats avaluats guardats a [bold]{saved}[/][/]")
 
 

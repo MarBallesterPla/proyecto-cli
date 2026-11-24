@@ -1,0 +1,90 @@
+{
+  "esquema": 1,
+  "accions": [
+    {
+      "nom": "cerca-portals",
+      "describe": "Consulta Labora, InfoJobs, Pacte Comarcal i LinkedIn",
+      "efecte": "cerca",
+      "comandos": ["cerca", "tot"],
+      "ordre": 10,
+      "simulable": true,
+      "params": {
+        "limit": { "per_defecte": 10 },
+        "portals": { "per_defecte": ["Labora", "InfoJobs", "Pacte Comarcal", "LinkedIn"] }
+      }
+    },
+    {
+      "nom": "exportar-fitxers",
+      "describe": "Guarda les ofertes en CSV (Excel) i JSON",
+      "efecte": "exportar",
+      "comandos": ["cerca", "tot"],
+      "ordre": 20,
+      "simulable": true,
+      "params": {
+        "directori": { "per_defecte": "resultats" },
+        "formats": { "per_defecte": ["csv", "json"], "permesos": ["csv", "json"] }
+      }
+    },
+    {
+      "nom": "avaluar-perfil",
+      "describe": "Puntua les ofertes 0-10 segons el perfil (IA local)",
+      "efecte": "avaluar",
+      "comandos": ["avalua", "tot"],
+      "ordre": 30,
+      "requereix_ia": true,
+      "simulable": true,
+      "params": {
+        "perfil": { "per_defecte": "" },
+        "model": { "per_defecte": "" }
+      }
+    },
+    {
+      "nom": "filtrar-descart",
+      "describe": "Descarta amb la IA les ofertes que no encaixen amb el perfil",
+      "efecte": "filtrar",
+      "comandos": ["avalua", "tot"],
+      "ordre": 40,
+      "requereix_ia": true,
+      "simulable": true,
+      "params": {
+        "keyword": { "per_defecte": "" }
+      }
+    },
+    {
+      "nom": "neteja-vells",
+      "describe": "Esborra fitxers de resultats més vells que 30 dies",
+      "efecte": "neteja",
+      "comandos": ["neteja"],
+      "ordre": 10,
+      "destructiva": true,
+      "simulable": true,
+      "params": {
+        "directori": { "per_defecte": "resultats" },
+        "dies": { "per_defecte": 30, "permesos": [7, 15, 30, 60, 90] }
+      }
+    },
+    {
+      "nom": "arxivar-sessio",
+      "describe": "Mou els fitxers generats ara a resultats/arxiu",
+      "efecte": "moure",
+      "comandos": ["neteja"],
+      "ordre": 20,
+      "destructiva": true,
+      "simulable": true,
+      "params": {
+        "directori": { "per_defecte": "resultats/arxiu" }
+      }
+    },
+    {
+      "nom": "tot-el-dia",
+      "describe": "Cerca, exporta i avalua amb el perfil del config",
+      "efecte": "cerca",
+      "comandos": ["tot"],
+      "ordre": 1,
+      "simulable": true,
+      "params": {
+        "limit": { "per_defecte": 15 }
+      }
+    }
+  ]
+}

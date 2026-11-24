@@ -8,3 +8,5 @@ venv/
 .env
 config.local.json
 resultats/
+.pytest_cache/
+*.pyc

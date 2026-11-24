@@ -1,6 +1,6 @@
 [project]
 name = "buscafeina"
-version = "0.1.0"
+version = "1.0.0"
 description = "CLI per a buscar feina a Labora, InfoJobs, Pacte Comarcal i LinkedIn"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -9,7 +9,11 @@ dependencies = [
     "questionary>=2.0",
     "rich>=13.0",
     "beautifulsoup4>=4.12",
+    "jsonschema>=4.0",
 ]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
 
 [project.scripts]
 buscafeina = "buscafeina.cli:main"
