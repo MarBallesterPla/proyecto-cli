@@ -55,6 +55,12 @@ def test_cas_felly_proveidor_ia_desconegut(tmp_path):
 
 
 def test_cap_claus_a_DEFAULTS():
-    """Els secrets no moren al codi: ni DEFAULTS ni la clau de config «api_key»."""
-    assert not any("api_key" in k or "secret" in k for k in DEFAULTS)
-    assert not any("secret" in str(v).lower() for v in DEFAULTS.values())
+    """Los secretos no viven en el código: DEFAULTS no almacena ninguna clave.
+
+    Solo puede aparecer el NOMBRE de la variable de entorno de donde se lee
+    (`*_api_key_env`), nunca el valor de un secreto.
+    """
+    for clave, valor in DEFAULTS.items():
+        if "api_key" in clave or "secret" in clave or "token" in clave:
+            assert clave.endswith("_env"), f"{clave} guarda un secreto, no el nombre de la variable"
+            assert valor == valor.upper()  # es un nombre de variable, no un valor
