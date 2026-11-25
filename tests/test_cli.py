@@ -65,7 +65,7 @@ def test_exportar_formats_del_comando(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(cli, "_ctx_from", lambda args, config: {
         **_ctx_base(tmp_path), "formats": ["csv"], "cercar": _cerca_buida})
     cli.main(["cerca", "-k", "fuster", "--no-browser", "--guardar", "csv"])
-    escrits = sorted(f.suffix for f in tmp_path.iterdir())
+    escrits = sorted(f.suffix for f in tmp_path.rglob("*") if f.is_file())
     assert escrits == [".csv"]
 
 
