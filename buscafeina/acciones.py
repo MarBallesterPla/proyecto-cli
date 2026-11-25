@@ -52,18 +52,23 @@ class Efecte:
 
 
 class AccioCerca(Efecte):
-    """Consulta els portals triats i posa les ofertes a `ctx['ofertes']`."""
+    """Consulta els portals triats i posa les ofertes a `ctx['ofertes']`.
+
+    `ctx['cercar']` permet injectar una funció de cerca alternativa (les
+    proves l'usen per a no dependre de la xarxa); per defecte, la del motor.
+    """
 
     def aplicar(self, ctx, params, *, simulacio=False):
         from .motor import executar_cerca
 
+        cercar = ctx.get("cercar") or executar_cerca
         limit = int(params.get("limit") or ctx.get("limit", 10))
         # el context mana: «--portals» guanya als per defectes de l'JSON
         portals = ctx.get("portals")
         if simulacio:
             noms = ", ".join(portals or ctx.get("portals", [])) or "tots"
             return f"[simulació] Consultaria {noms} amb límit {limit} i no guardaria res."
-        ofertes, parells = executar_cerca(ctx, portals=portals, limit=limit)
+        ofertes, parells = cercar(ctx, portals=portals, limit=limit)
         ctx["ofertes"] = ofertes
         ctx["parells"] = parells
         lectors = sorted({p.label for p, o in parells if o})

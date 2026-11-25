@@ -1,7 +1,5 @@
 """Proves del CLI: subcomandaments, errors llegibles i cap traceback."""
 
-import json
-
 import pytest
 
 from buscafeina import cli
@@ -30,6 +28,62 @@ def test_portals_invalides_sortida_2(capsys):
     eixida = capsys.readouterr().out
     assert "Portals desconeguts" in eixida
     assert "Traceback" not in eixida
+
+
+def _cerca_buida(ctx, portals=None, limit=10):
+    """Motor fals: (files planes, parells) amb una sola oferta fictícia.
+
+    Les files planes són la llista de dicts que `AccioExportar` espera trobar
+    a `ctx['ofertes']` després d'una cerca real.
+    """
+    from buscafeina.models import Offer
+    from buscafeina.portals.base import Portal
+
+    class PortalFictici(Portal):
+        label = "Fictici"
+
+        def browser_url(self):
+            return "https://e.example"
+
+    portal = PortalFictici(ctx["criteris"], {})
+    oferta = Offer(title="Fuster d'arxa", url="https://e.example/o",
+                   company="Fustes Sud", location="Xàtiva")
+    files = [{"portal": "Fictici", "titol": oferta.title, "empresa": oferta.company,
+              "lloc": oferta.location, "data": "", "detalls": "", "url": oferta.url}]
+    return files, [(portal, [oferta])]
+
+
+def test_exportar_formats_del_comando(tmp_path, monkeypatch, capsys):
+    """Cas felly: --guardar csv ha de produir només CSV tot i que l'JSON diga csv+json.
+
+    Les opcions de la línia d'ordes guanyen als valors per defecte de la
+    configuració externa: si no, la CLI ignoraria l'usuari/ària.
+    """
+    monkeypatch.chdir(tmp_path)
+    # el context admet una funció de cerca injectada (`cercar`): les proves
+    # l'usen per a no dependre de la xarxa ni dels portals.
+    monkeypatch.setattr(cli, "_ctx_from", lambda args, config: {
+        **_ctx_base(tmp_path), "formats": ["csv"], "cercar": _cerca_buida})
+    cli.main(["cerca", "-k", "fuster", "--no-browser", "--guardar", "csv"])
+    escrits = sorted(f.suffix for f in tmp_path.iterdir())
+    assert escrits == [".csv"]
+
+
+def _ctx_base(tmp_path):
+    from buscafeina.models import Criteria
+
+    return {
+        "config": {"proveidor_ia": "ollama", "model_ia": "qwen3", "perfil": ""},
+        "criteris": Criteria(keyword="fuster"),
+        "portals": ["Fictici"],
+        "limit": 5,
+        "model": None,
+        "perfil": "",
+        "directori": str(tmp_path),
+        "formats": None,
+        "fitxers": [],
+        "avisos": [],
+    }
 
 
 def test_accions_json_rota_no_rebenta(capsys, tmp_path, monkeypatch):
