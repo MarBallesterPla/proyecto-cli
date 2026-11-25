@@ -1,6 +1,6 @@
 [project]
 name = "buscafeina"
-version = "1.0.0"
+version = "1.1.0"
 description = "CLI per a buscar feina a Labora, InfoJobs, Pacte Comarcal i LinkedIn"
 readme = "README.md"
 requires-python = ">=3.10"

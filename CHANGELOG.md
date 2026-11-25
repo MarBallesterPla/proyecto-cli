@@ -4,6 +4,31 @@ Totes les notes importants d'este projecte.
 Format [Keep a Changelog](https://keepachangelog.com/es/1.1.0/),
 adherido a [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.1.0] - 2026-11-25
+
+### Añadido
+
+- **Dos portales nuevos con lectura automática**: `SEPE` (Sistema Nacional de
+  Empleo, agregado público de todos los servicios autonómicos, incluido
+  Labora) y `Turijobs` (turismo y hostelería, con fuerte presencia en la
+  Comunitat Valenciana). La CLI ahora lee ofertas de 4 portales y mantiene
+  el fallback a navegador en los otros 2 (Labora con sesión DNI/PIN y Pacte
+  Comarcal).
+- La acción `cerca-portals` acepta una función de búsqueda inyectable
+  (`ctx["cercar"]`) para probar el pipeline sin red ni portales reales.
+- Nuevas pruebas unitarias de los parsers SEPE/Turijobs con HTML fixture
+  (sin red): tablas del SNE, empresa/ciudad de Turijobs y filtro de
+  localidad.
+
+### Corregido
+
+- `--portals` de la línea de órdenes ganaba ahora a los portales por defecto
+  declarados en `accions.json` (antes se consultaban los 6 siempre).
+- `--guardar csv` produce solo CSV (antes exportaba también JSON por
+  respetar el `per_defecte` del JSON externo).
+- `motor.exportar` escribía con el `formats` del contexto en lugar del de la
+  acción.
+
 ## [1.0.0] - 2026-11-24
 
 ### Añadido
