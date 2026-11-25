@@ -11,18 +11,21 @@ from pathlib import Path
 
 from .errors import BuscafeinaError
 from .export import FIELDS, _rows, default_stem
+from .options import PORTALS
 from .portals import get_portal
 
 
 def consultar_portals(ctx: dict, portals: list[str] | None = None, limit: int = 10) -> list:
     """Torna una llista de tuples (portal, ofertes).
 
-    Les excepcions d'un portal no tomben la sessió: es guarden a
-    `ctx['avisos']` i eixe portal queda sense ofertes (fallback al navegador).
+    `portals=None vol dir «fes-ho servir el que hi haja al context» (que al
+    seu torn ve dels `--portals` de la línia d'ordes o de tots). Les
+    excepcions d'un portal no tomben la sessió: es guarden a `ctx['avisos']`
+    i eixe portal queda sense ofertes (fallback al navegador).
     """
     criteria = ctx["criteris"]
     config = ctx["config"]
-    noms = portals or ctx.get("portals")
+    noms = portals if portals is not None else ctx.get("portals", list(PORTALS))
     parells = []
     for nom in noms:
         portal = get_portal(nom, criteria, config)

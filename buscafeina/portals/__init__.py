@@ -4,6 +4,8 @@ from .infojobs import InfoJobs
 from .labora import Labora
 from .linkedin import LinkedIn
 from .pacte import PacteComarcal
+from .sepe import SEPE
+from .turijobs import Turijobs
 
 __all__ = ["PORTAL_CLASSES", "get_portal"]
 
@@ -13,6 +15,8 @@ PORTAL_CLASSES = {
     "InfoJobs": InfoJobs,
     "Pacte Comarcal": PacteComarcal,
     "LinkedIn": LinkedIn,
+    "SEPE": SEPE,
+    "Turijobs": Turijobs,
 }
 
 

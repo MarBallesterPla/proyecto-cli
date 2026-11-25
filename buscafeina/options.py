@@ -1,7 +1,7 @@
 """Opcions dels menús i correspondències amb els filtres de cada portal."""
 
 # Portals disponibles
-PORTALS = ["Labora", "InfoJobs", "Pacte Comarcal", "LinkedIn"]
+PORTALS = ["Labora", "InfoJobs", "Pacte Comarcal", "LinkedIn", "SEPE", "Turijobs"]
 
 # Tipus de contracte (categoríes reals d'InfoJobs)
 CONTRACT_OPTIONS = [

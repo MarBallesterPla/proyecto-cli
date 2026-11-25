@@ -3,14 +3,14 @@
   "accions": [
     {
       "nom": "cerca-portals",
-      "describe": "Consulta Labora, InfoJobs, Pacte Comarcal i LinkedIn",
+      "describe": "Consulta els portals (Labora, SEPE, InfoJobs, Turijobs, Pacte i LinkedIn)",
       "efecte": "cerca",
       "comandos": ["cerca", "tot"],
       "ordre": 10,
       "simulable": true,
       "params": {
         "limit": { "per_defecte": 10 },
-        "portals": { "per_defecte": ["Labora", "InfoJobs", "Pacte Comarcal", "LinkedIn"] }
+        "portals": { "per_defecte": ["Labora", "InfoJobs", "Pacte Comarcal", "LinkedIn", "SEPE", "Turijobs"] }
       }
     },
     {
