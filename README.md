@@ -1,9 +1,9 @@
 # buscafeina
 
 CLI per a buscar, avaluar i ordenar ofertes de feina des del terminal, en
-valencià. Consultes a quatre cercadors (Labora, InfoJobs, Pacte Comarcal i
-LinkedIn), accions predefinides definides en un JSON extern, IA local (Ollama)
-per a puntuar ofertes, i mode simulació per a tot.
+valencià. Consultes a sis cercadors (Labora, SEPE, InfoJobs, Turijobs, Pacte
+Comarcal i LinkedIn), accions predefinides definides en un JSON extern, IA
+local (Ollama) per a puntuar ofertes, i mode simulació per a tot.
 
 ## Instal·lació
 
@@ -53,11 +53,13 @@ Opcions de `cerca`/`tot`:
 | `--no-browser` | No obrir el navegador: només imprimeix les URLs |
 | `--exec NOM` | Executa només una acció del JSON |
 
-**Portals**: LinkedIn i InfoJobs es llegeixen automàticament; Labora (formulari
-amb sessió DNI/PIN) i Pacte Comarcal no tenen lectura automàtica, i la CLI obrí
-el navegador amb la cerca apuntada (o imprimeix la URL amb `--no-browser`).
-Torn i horari s'incorporen al text de la cerca perquè cap portal té filtre
-natiu.
+**Portals**: LinkedIn, InfoJobs, SEPE i Turijobs es llegeixen automàticament;
+Labora (formulari amb sessió DNI/PIN) i Pacte Comarcal no tenen lectura
+automàtica, i la CLI obrí el navegador amb la cerca apuntada (o imprimeix la
+URL amb `--no-browser`). Com que Labora és el propi servei valencià i el SEPE
+l'agrega, pots fer la busca al SEPE en modo lectura i t'endús a Labora quan
+vulgues postular-te. Torn i horari s'incorporen al text de la cerca perquè cap
+portal té filtre natiu.
 
 ## Accions predefinides (`accions.json`)
 

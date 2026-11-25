@@ -80,7 +80,8 @@ def _neteja_parser(prog: str) -> argparse.ArgumentParser:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="buscafeina",
-        description="Cerca, avalua i ordena ofertes de feina des del terminal.",
+        description="Cerca, avalua i ordena ofertes de feina (Labora/SEPE/InfoJobs/"
+                    "Turijobs/Pacte/LinkedIn).",
     )
     sub = parser.add_subparsers(dest="comando")
     sub.add_parser("cerca", parents=[_criteris_parser("cerca")], help="buscar ofertes als portals")
