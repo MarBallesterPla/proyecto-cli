@@ -58,7 +58,8 @@ class AccioCerca(Efecte):
         from .motor import executar_cerca
 
         limit = int(params.get("limit") or ctx.get("limit", 10))
-        portals = params.get("portals")
+        # el context mana: «--portals» guanya als per defectes de l'JSON
+        portals = ctx.get("portals")
         if simulacio:
             noms = ", ".join(portals or ctx.get("portals", [])) or "tots"
             return f"[simulació] Consultaria {noms} amb límit {limit} i no guardaria res."
