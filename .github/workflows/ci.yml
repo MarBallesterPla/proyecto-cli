@@ -29,5 +29,5 @@ jobs:
         run: |
           buscafeina --help
 
-      - name: pytest (sin red: las pruebas simulan IA y portales)
+      - name: "pytest (sin red: las pruebas simulan IA y portales)"
         run: pytest tests -v
