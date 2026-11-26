@@ -61,7 +61,7 @@ Opcions de `cerca`/`tot`:
 Labora (formulari amb sessió DNI/PIN) i Pacte Comarcal no tenen lectura
 automàtica, i la CLI obrí el navegador amb la cerca apuntada (o imprimeix la
 URL amb `--no-browser`). Com que Labora és el propi servei valencià i el SEPE
-l'agrega, pots fer la busca al SEPE en modo lectura i t'endús a Labora quan
+l'agrega, pots fer la busca al SEPE en mode lectura i t'endús a Labora quan
 vulgues postular-te. Torn i horari s'incorporen al text de la cerca perquè cap
 portal té filtre natiu.
 
@@ -129,7 +129,7 @@ La capa d'IA (`buscafeina/ia.py`) te dos proveïdors, triats a
 les variables. **No hi ha cap clau en el codi ni en la història del repositori**
 (podeu verificar-ho amb `git log -p -S API_KEY`).
 
-**Sin red o sin Ollama**, la CLI no es trenca: les accions amb IA se salten
+**Sense xarxa o sense Ollama**, la CLI no es trenca: les accions amb IA se salten
 amb un missatge que explica què falta i el resto de la seqüència (cerca,
 exportar, neteja) funciona igualment. També tens `--simulacio` per a veure
 tot el pla sense IA.
@@ -158,27 +158,29 @@ pip install -e ".[dev]"
 pytest tests -v
 ```
 
-27 proves amb pytest, **totes en carpetes temporals** (`tmp_path`) — mai sobre
-ficheros reales:
+33 proves amb pytest, **totes en carpetes temporals** (`tmp_path`) - mai sobre
+fitxers reals:
 
 - Camí feliç: càrrega de l'`accions.json` de exemple, cerca en simulació,
-  exportació que informa del fitxer creat, neteja simulada, configuració vàlida,
-  parseig de respostes brutes de la IA.
+  exportació que informa del fitxer creat, neteja simulada, configuració
+  vàlida, parseig de respostes brutes de la IA, parsers de SEPE i Turijobs
+  amb HTML fixture (sense xarxa).
 - Casos feos: JSON roto, JSON amb camps que falten o efectes inventats, config
   amb tipus equivocat, portal desconegut, acció destructiva sense confirmar
   (fitxers intactes), IA no disponible (se salta, no trunca), colisions de nom
-  en moure fitxers, model que no torna JSON.
-- Les proves no tenen red: un proveïdor d'IA simulat se n'encarrega.
+  en moure fitxers, model que no torna JSON, `--guardar csv` que no ha
+  d'escriure JSON també.
+- Les proves no tenen xarxa: un proveïdor d'IA simulat se n'encarrega.
 
 El workflow de GitHub Actions (`.github/workflows/ci.yml`) instal·la el paquet
-des del repo, comprova que `buscafeina --help` funcion i executat `pytest` en
-Python 3.10 y 3.12 a cada push i PR.
+des del repo, comprova que `buscafeina --help` funcione i executa `pytest` en
+Python 3.10 i 3.12 a cada push i PR.
 
 ## Limitacions
 
-- LinkedIn i InfoJobs poden bloquejar l'accés automatitzat; aquesta CLI usa
+- LinkedIn i InfoJobs poden bloquejar l'accés automatitzat; aquesta CLI fa servir
   només endpoints públics i sempre ofereix el fallback al navegador. Ús
   personal i moderat.
 - Labora requereix DNI + PIN; la CLI no guarda credencials.
-- La qualitat de l'avaluació depèn del model local; amb models chiquets el
-  format JSON pot tindre soroll — el parseig el tolera, i si no, avisar.
+- La qualitat de l'avaluació depén del model local; amb models xicotets el
+  format JSON pot tindre soroll — el parseig ho tolera, i si no, avisar.
