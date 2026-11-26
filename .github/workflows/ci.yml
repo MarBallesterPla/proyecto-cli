@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  pruebas:
+  proves:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -20,14 +20,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Instala dependencias
+      - name: Instal·la dependències
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: Prueba de instalación (queda disponible como comando)
+      - name: Prova d'instal·lació (quede disponible com a comanda)
         run: |
           buscafeina --help
 
-      - name: "pytest (sin red: las pruebas simulan IA y portales)"
+      - name: "pytest (sense xarxa: les proves simulen IA i portals)"
         run: pytest tests -v

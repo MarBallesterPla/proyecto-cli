@@ -48,13 +48,14 @@ def _rows(portals_results) -> list:
 
 
 def default_stem(criteria) -> str:
-    """Nom base del fitxer: feina-panadero-valencia-20261110-1032."""
+    """Nom base del fitxer: feina-panadero-valencia-20261110-103245 (amb segons)."""
     parts = ["feina"]
     if criteria.keyword:
         parts.append(slugify(criteria.keyword))
     if criteria.locality:
         parts.append(slugify(criteria.locality))
-    parts.append(datetime.now().strftime("%Y%m%d-%H%M"))
+    # segons inclosos: dues cerques en el minut no es pisen
+    parts.append(datetime.now().strftime("%Y%m%d-%H%M%S"))
     return "-".join(parts)
 
 

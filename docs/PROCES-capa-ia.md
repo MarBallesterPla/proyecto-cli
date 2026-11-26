@@ -28,5 +28,5 @@ cerca sense avaluar no toca cap servidor extern.
 
 ## Proves
 
-`tests/test_ia.py`: els proveïdors es mockegen a nivell de xarxa (`requests`
-monkeypatchejat), així les proves corren sense servidor.
+`tests/test_motor.py` (parseig de respostes i errors d'IA) i el proveïdor
+simulat de `tests/conftest.py`: les proves corren sense servidor ni xarxa.

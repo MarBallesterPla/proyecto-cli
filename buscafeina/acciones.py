@@ -90,9 +90,16 @@ class AccioExportar(Efecte):
         if parells is None:
             parells = [(None, o) for o in ofertes or []]
         directori = str(params.get("directori") or ctx.get("directori", "resultats"))
-        formats = params.get("formats") or ctx.get("formats") or ["csv", "json"]
+        formats = params.get("formats")
+        if formats is None:
+            formats = ctx.get("formats")
+        if formats is None:
+            formats = ["csv", "json"]
         if isinstance(formats, str):
             formats = [formats]
+        if not formats:
+            # --guardar no: llista buida, no «sense decidir»
+            return "No es guarda res: l'opció `--guardar` diu «no»."
         if not ofertes:
             return "Res a guardar: no hi ha ofertes al context."
         if simulacio:

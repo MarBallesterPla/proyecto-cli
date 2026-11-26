@@ -8,7 +8,7 @@
 buscafeina executa "accions predefinides":seqüències d'operacions sobre els
 portals i els fitxers de resultats (cercar, exportar, avaluar amb IA, netejar
 fitxers vells…). La pregunta de disseny és on declarar eixes accions: dins de
-Python (funcions o dictaris hardcoded) o en un fitxer de configuració extern
+Python (funcions o dictaris fixats) o en un fitxer de configuració extern
 que l'usuari/ària pot editar.
 
 ## Decisió
@@ -50,7 +50,7 @@ cada acció des de la seua entrada JSON validada per esquema
 
 - **YAML/TOML**: llegible, però afiga una dependència d'anàlisi i el JSON ja
   validem amb jsonschema; `.env` ja cobreix els secrets.
-- **Classes Python per acció hardcoded**: fàcil d'escriure, però cada canvi
+- **Classes Python per acció fixada al codi**: fàcil d'escriure, però cada canvi
   d'usuari exigeix tocar i reinstal·lar el codi, i no es pot validar contra
   esquema.
 - **Plugins dinàmics (importar mòduls des del JSON)**: perill de seguretat

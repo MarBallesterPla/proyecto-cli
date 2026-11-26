@@ -113,3 +113,28 @@ def test_neteja_simulada_dirigeix_els_paths(tmp_path, monkeypatch, capsys):
     cli.main(["neteja", "--simulacio"])
     eixida = capsys.readouterr().out.lower()
     assert "resultats" in eixida or "no existix" in eixida
+
+
+def test_portals_de_la_linia_dordes_guanya(tmp_path, monkeypatch, capsys):
+    """Cas felly: `--portals` mana sobre els portals per defecte de l'JSON (regressió 1.1.0)."""
+    monkeypatch.chdir(tmp_path)
+    cli.main(["cerca", "-k", "fuster", "--portals", "InfoJobs,LinkedIn",
+              "--simulacio", "--no-browser"])
+    eixida = capsys.readouterr().out
+    assert "InfoJobs, LinkedIn" in eixida
+    assert "SEPE" not in eixida  # els 6 per defecte de l'JSON no apareixen
+
+
+def test_guardar_no_no_escriu_res(tmp_path, monkeypatch, capsys):
+    """Cas felly: `--guardar no` no ha d'escriure ni CSV ni JSON (regressió)."""
+    monkeypatch.chdir(tmp_path)
+    real_ctx = cli._ctx_from
+
+    def ctx_amb_cerca(args, config):
+        ctx = real_ctx(args, config)
+        ctx["cercar"] = _cerca_buida
+        return ctx
+
+    monkeypatch.setattr(cli, "_ctx_from", ctx_amb_cerca)
+    cli.main(["cerca", "-k", "fuster", "--no-browser", "--guardar", "no"])
+    assert list(tmp_path.iterdir()) == []

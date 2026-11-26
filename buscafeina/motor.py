@@ -21,7 +21,7 @@ def consultar_portals(ctx: dict, portals: list[str] | None = None, limit: int = 
     `portals=None vol dir «fes-ho servir el que hi haja al context» (que al
     seu torn ve dels `--portals` de la línia d'ordes o de tots). Les
     excepcions d'un portal no tomben la sessió: es guarden a `ctx['avisos']`
-    i eixe portal queda sense ofertes (fallback al navegador).
+    i eixe portal queda sense ofertes (pas al navegador).
     """
     criteria = ctx["criteris"]
     config = ctx["config"]

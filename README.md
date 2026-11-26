@@ -66,9 +66,9 @@ Opcions de `cerca`/`tot`:
 
 **Portals**: LinkedIn, InfoJobs, SEPE i Turijobs es llegeixen automàticament;
 Labora (formulari amb sessió DNI/PIN) i Pacte Comarcal no tenen lectura
-automàtica, i la CLI obrí el navegador amb la cerca apuntada (o imprimeix la
+automàtica, i la CLI obri el navegador amb la cerca apuntada (o imprimeix la
 URL amb `--no-browser`). Com que Labora és el propi servei valencià i el SEPE
-l'agrega, pots fer la busca al SEPE en mode lectura i t'endús a Labora quan
+l'agrega, pots fer la cerca al SEPE en mode lectura i t'endús a Labora quan
 vulgues postular-te. Torn i horari s'incorporen al text de la cerca perquè cap
 portal té filtre natiu.
 
@@ -95,7 +95,7 @@ traceback.
       "comandos": ["avalua", "tot"],    // des d'on es pot executar
       "ordre": 30,                      // posició a la seqüència (opcional, 50)
       "destructiva": false,             // esborra/mou: cal --simulacio o --si
-      "requereix_ia": true,             // sense IA se salta amb avís, no trunca
+      "requereix_ia": true,             // sense IA es salta amb avís, no trunca
       "simulable": true,                // accepta --simulacio (per defecte, sí)
       "despres": ["exportar-fitxers"],  // encadenables: ací combinem accions
       "params": { "perfil": { "per_defecte": "" } }
@@ -127,7 +127,7 @@ La capa d'IA (`buscafeina/ia.py`) te dos proveïdors, triats a
 
 - **`ollama`** (per defecte): model local, sense claus, sense eixida a
   internet. `ollama pull qwen3` i llestos.
-- **`openai`**: qualsevol endpoint compatible amb `/chat/completions`
+- **`openai`**: qualsevol servidor compatible amb `/chat/completions`
   (`openai_base_url`). La clau es llig de la variable d'entorn que indique
   `openai_api_key_env` (per defecte `OPENAI_API_KEY`) o d'un fitxer `.env` en
   la carpeta actual.
@@ -136,8 +136,8 @@ La capa d'IA (`buscafeina/ia.py`) te dos proveïdors, triats a
 les variables. **No hi ha cap clau en el codi ni en la història del repositori**
 (podeu verificar-ho amb `git log -p -S API_KEY`).
 
-**Sense xarxa o sense Ollama**, la CLI no es trenca: les accions amb IA se salten
-amb un missatge que explica què falta i el resto de la seqüència (cerca,
+**Sense xarxa o sense Ollama**, la CLI no es trenca: les accions amb IA es salten
+amb un missatge que explica què falta i la resta de la seqüència (cerca,
 exportar, neteja) funciona igualment. També tens `--simulacio` per a veure
 tot el pla sense IA.
 
@@ -165,29 +165,33 @@ pip install -e ".[dev]"
 pytest tests -v
 ```
 
-33 proves amb pytest, **totes en carpetes temporals** (`tmp_path`) - mai sobre
+36 proves amb pytest, **totes en carpetes temporals** (`tmp_path`) — mai sobre
 fitxers reals:
 
 - Camí feliç: càrrega de l'`accions.json` de exemple, cerca en simulació,
   exportació que informa del fitxer creat, neteja simulada, configuració
-  vàlida, parseig de respostes brutes de la IA, parsers de SEPE i Turijobs
-  amb HTML fixture (sense xarxa).
+  vàlida, parseig de respostes brutes de la IA, analitzadors de SEPE i
+  Turijobs amb HTML fixt (sense xarxa).
 - Casos feos: JSON roto, JSON amb camps que falten o efectes inventats, config
   amb tipus equivocat, portal desconegut, acció destructiva sense confirmar
-  (fitxers intactes), IA no disponible (se salta, no trunca), colisions de nom
+  (fitxers intactes), IA no disponible (es salta, no trunca), colisions de nom
   en moure fitxers, model que no torna JSON, `--guardar csv` que no ha
-  d'escriure JSON també.
+  d'escriure JSON també, i `--guardar no` que no ha d'escriure res.
 - Les proves no tenen xarxa: un proveïdor d'IA simulat se n'encarrega.
 
-El workflow de GitHub Actions (`.github/workflows/ci.yml`) instal·la el paquet
+El flux de GitHub Actions (`.github/workflows/ci.yml`) instal·la el paquet
 des del repo, comprova que `buscafeina --help` funcione i executa `pytest` en
 Python 3.10 i 3.12 a cada push i PR.
 
 ## Limitacions
 
 - LinkedIn i InfoJobs poden bloquejar l'accés automatitzat; aquesta CLI fa servir
-  només endpoints públics i sempre ofereix el fallback al navegador. Ús
+  només API públiques i sempre ofereix el pas al navegador. Ús
   personal i moderat.
 - Labora requereix DNI + PIN; la CLI no guarda credencials.
 - La qualitat de l'avaluació depén del model local; amb models xicotets el
   format JSON pot tindre soroll — el parseig ho tolera, i si no, avisar.
+
+## Autor
+
+Mar Ballester Pla — [github.com/MarBallesterPla](https://github.com/MarBallesterPla).

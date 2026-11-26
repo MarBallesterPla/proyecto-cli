@@ -1,5 +1,10 @@
 # REFERÈNCIA DEL PROJECTE — buscafeina
 
+> ⚠️ **Document històric** (sessió del 10 de novembre de 2026). L'estat
+> actual del projecte està en [`README.md`](README.md) i
+> [`CHANGELOG.md`](CHANGELOG.md); este document es conserva com a diari de
+> la primera sessió.
+
 > Document generat a partir de la sessió de treball de novembre de 2026.
 > Resum de tot el que s'ha fet, per què, i com continuar-ho.
 
@@ -8,7 +13,7 @@
 CLI en Python per a buscar feina en valencià, amb quatre cercadors:
 **Labora** (Punt Labora, GVA), **InfoJobs**, **Pacte Comarcal** i **LinkedIn**.
 
-Estratègia triada («ambdós, amb fallback»):
+Estratègia triada («ambdós, amb alternativa al navegador»):
 1. Mostrar resultats **al terminal** quan el portal ho permet.
 2. Si no és possible (bloqueig, sessió pròpia…), **obrir el navegador**
    amb la cerca filtrada.
@@ -67,7 +72,7 @@ Python 3.15 instal·lat a la màquina.
   Slugs: indefinido, temporal, practicas, autonomo, otros-contratos /
   completa, parcial, por-horas.
 - Fa limitació de peticions: després de varies peticions ràpides servix
-  la pàgina de «No podemos identificar tu navegador» (el fallback ho
+  la pàgina de «No podemos identificar tu navegador» (l'alternativa ho
   gestiona).
 
 ### Labora (Punt Labora)

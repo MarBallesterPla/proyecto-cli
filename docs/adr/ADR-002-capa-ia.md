@@ -13,20 +13,20 @@ o les dos.
 
 Capa `buscafeina/ia.py` amb una interfície `ProveidorIA` i dos
 implementacions: `Ollama` (per defecte, servidor local, sense clau i sense
-eixida a internet) i `OpenAICompatible` (endpoint configurables; la clau es
+eixida a internet) i `OpenAICompatible` (servidors configurables; la clau es
 llig exclusivament d'una variable d'entorn indicada a `openai_api_key_env`,
 mai del codi ni del repositori). La elecció es fa a `config.json` amb
 `proveidor_ia`, resolt per la fàbrica estàtica `ProveidorIA.from_config()`.
 
 **Si el proveïdor no està disponible, la CLI no es trenca**: les accions amb
-IA se salten amb un missatge que explica què falta (servidor parat, model no
+IA es salten amb un missatge que explica què falta (servidor parat, model no
 descarregat amb la comanda per a baixar-lo, o variable d'entorn absent) i la
-seqüència continua amb la resta d'accions. Així el modo sense red i sense Ollama
-funciona: cerca, exportar, neteja i arxiu no depenen de l'IA.
+seqüència continua amb la resta d'accions. Així el mode sense xarxa i sense
+Ollama funciona: cerca, exportar, neteja i arxiu no depenen de l'IA.
 
 ## Conseqüències
 
-- L'alumne/a pot treballar 100 % offline i sense claus (Ollama local), que era
+- L'alumne/a pot treballar 100 % sense xarxa i sense claus (Ollama local), que era
   el requisit del projecte; qui tinga compte d'OpenAI o similar pot usar-lo
   canviant dos camps del config.
 - Les proves substitueixen la fàbrica per un proveïdor simulat: cap test toca
@@ -37,7 +37,7 @@ funciona: cerca, exportar, neteja i arxiu no depenen de l'IA.
 
 ## Alternatives descartades
 
-- **Ollama hardcoded al mòdul d'avaluació** (com en la versió inicial): barreja
+- **Ollama fixat al mòdul d'avaluació** (com en la versió inicial): barreja
   interfície i proveïdor; sense manera de canviar sense parchar codi.
 - **Només OpenAI**: obligaria a tenir clau i xarxa, i filtraria dades de cerca
   de feina (perfil personal) a un servei de tercers.
