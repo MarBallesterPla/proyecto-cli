@@ -1,67 +1,69 @@
 # Changelog
 
 Totes les notes importants d'este projecte.
-Format [Keep a Changelog](https://keepachangelog.com/es/1.1.0/),
-adherido a [Versionado Semántico](https://semver.org/lang/es/).
+Format [Keep a Changelog](https://keepachangelog.com/ca/1.1.0/),
+adherit a [Versionat Semàntic](https://semver.org/lang/ca/).
 
 ## [1.1.0] - 2026-11-25
 
-### Añadido
+### Afegit
 
-- **Dos portales nuevos con lectura automática**: `SEPE` (Sistema Nacional de
-  Empleo, agregado público de todos los servicios autonómicos, incluido
-  Labora) y `Turijobs` (turismo y hostelería, con fuerte presencia en la
-  Comunitat Valenciana). La CLI ahora lee ofertas de 4 portales y mantiene
-  el fallback a navegador en los otros 2 (Labora con sesión DNI/PIN y Pacte
+- **Dos portals nous amb lectura automàtica**: `SEPE` (Sistema Nacional
+  d'Empleu, agregat públic de tots els serveis autonòmics, inclòs Labora) i
+  `Turijobs` (turisme i hostaleria, amb forta presència a la Comunitat
+  Valenciana). La CLI ara llegeix ofertes de 4 portals i manté el recorregut
+  alternatiu al navegador en els altres 2 (Labora amb sessió DNI/PIN i Pacte
   Comarcal).
-- La acción `cerca-portals` acepta una función de búsqueda inyectable
-  (`ctx["cercar"]`) para probar el pipeline sin red ni portales reales.
-- Nuevas pruebas unitarias de los parsers SEPE/Turijobs con HTML fixture
-  (sin red): tablas del SNE, empresa/ciudad de Turijobs y filtro de
-  localidad.
+- L'acció `cerca-portals` admet una funció de cerca injectable
+  (`ctx["cercar"]`) per a provar el pipeline sense xarxa ni portals reals.
+- Noves proves unitàries dels analitzadors SEPE/Turijobs amb HTML fixture
+  (sense xarxa): taules del SNE, empresa/ciutat de Turijobs i filtre de
+  localitat.
 
-### Corregido
+### Corregit
 
-- `--portals` de la línea de órdenes ganaba ahora a los portales por defecto
-  declarados en `accions.json` (antes se consultaban los 6 siempre).
-- `--guardar csv` produce solo CSV (antes exportaba también JSON por
-  respetar el `per_defecte` del JSON externo).
-- `motor.exportar` escribía con el `formats` del contexto en lugar del de la
-  acción.
+- `--portals` de la línia d'ordes guanyava ara als portals per defecte
+  declarats en `accions.json` (abans se consultaven els 6 sempre).
+- `--guardar csv` produïx només CSV (abans exportava també JSON per respectar
+  el `per_defecte` del JSON extern).
+- `motor.exportar` escrivia amb el `formats` del context en lloc del de
+  l'acció.
 
 ## [1.0.0] - 2026-11-24
 
-### Añadido
+### Afegit
 
-- **Acciones predefinidas en JSON externo** (`accions.json`) con esquema propio
-  (`buscafeina/data/esquema-accions.json`) validado antes de ejecutar.
-  ADR-001 justifica la decisión.
-- Nuevas acciones de fábrica: `cerca-portals`, `exportar-fitxers`,
+- **Accions predefinides en JSON extern** (`accions.json`) amb esquema propi
+  (`buscafeina/data/esquema-accions.json`) validat abans d'executar. ADR-001
+  justifica la decisió.
+- Noves accions de fàbrica: `cerca-portals`, `exportar-fitxers`,
   `avaluar-perfil`, `filtrar-descart`, `neteja-vells`, `arxivar-sessio`,
-  `tot-el-dia`; encadenables con `despres` y ejecutables una a una con `--exec`.
-- **Modo simulación** (`--simulacio`) en todas las acciones; las destructivas
-  (`neteja`, `moure`) piden `--si` o confirmación interactiva.
-- **Capa de IA desacoplada** (`buscafeina/ia.py`): Ollama local por defecto o
-  API compatible con OpenAI; claves solo por `.env`/variables de entorno, con
+  `tot-el-dia`; encadenables amb `despres` i executables una a una amb
+  `--exec`.
+- **Mode simulació** (`--simulacio`) en totes les accions; les destructives
+  (`neteja`, `moure`) demanen `--si` o confirmació interactiva.
+- **Capa d'IA desacoplada** (`buscafeina/ia.py`): Ollama local per defecte o
+  API compatible amb OpenAI; claus només per `.env`/variables d'entorn, amb
   `.env.example`. ADR-002.
-- Sin IA o sin red: las acciones con IA se saltan con aviso legible y la CLI
-  sigue con el resto.
-- Excepciones propias (`BuscafeinaError`, `ConfigError`, `AccioNoValida`,
-  `IAError`) con mensajes humanos y códigos de salida; ningún traceback ante
-  errores previsibles.
-- Subcomandos `cerca`, `tot`, `neteja`, `accions` además de `avalua`.
-- 27 pruebas con pytest en carpetas temporales y CI en GitHub Actions
-  (Python 3.10 y 3.12).
-- Instalación como comando con `uv tool install` / `pipx install` desde GitHub.
+- Sense IA o sense xarxa: les accions amb IA se salten amb avís llegible i la
+  CLI continua amb la resta.
+- Excepcions pròpies (`BuscafeinaError`, `ConfigError`, `AccioNoValida`,
+  `IAError`) amb missatges humans i codis de sortida; cap traceback davant
+  errors previsibles.
+- Subcomandos `cerca`, `tot`, `neteja`, `accions` a més de `avalua`.
+- 33 proves amb pytest en carpetes temporals i CI en GitHub Actions (Python
+  3.10 i 3.12).
+- Instal·lació com a comanda amb `uv tool install` / `pipx install` des de
+  GitHub.
 
-### Cambiado
+### Canviat
 
-- `avalua` usa ahora la capa de IA común y admite `--simulacio`, `--filtrar` y
-  `--llistar-accions`.
-- Los nombres de los ficheros de resultados llevan segundos para no
-  sobrescribir nunca un export previo.
+- `avalua` fa servir ara la capa d'IA comuna i admet `--simulacio`,
+  `--filtrar` i `--llistar-accions`.
+- Els noms dels fitxers de resultats porten segons per a no sobreescriure mai
+  una exportació prèvia.
 
 ## [0.1.0]
 
-- Versión inicial: búsqueda en Labora, InfoJobs, Pacte Comarcal y LinkedIn,
-  exportación CSV/JSON y evaluación con Ollama.
+- Versió inicial: cerca en Labora, InfoJobs, Pacte Comarcal i LinkedIn,
+  exportació CSV/JSON i avaluació amb Ollama.
