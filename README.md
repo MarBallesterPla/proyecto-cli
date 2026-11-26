@@ -19,6 +19,13 @@ uv tool install git+https://github.com/MarBallesterPla/proyecto-cli.git
 buscafeina accions          # queda disponible com a comando en qualsevol carpeta
 ```
 
+> **Nota (uv):** el executable es posa a `%USERPROFILE%\.local\bin`. Si `uv`
+> avisa que eixa carpeta no està al `PATH`, obri una finestra nova després
+> d'afegir-la (Environament del sistema → variables d'entorn de l'usuari →
+> `Path`), perquè `buscafeina` es resolga des de qualsevol carpeta. Verificable
+> amb `Get-Command buscafeina`: ha de tornar la ruta de `.local\bin`, no una
+> instal·lació editable antiga.
+
 En mode desenvolupament, des d'una còpia local:
 
 ```powershell
