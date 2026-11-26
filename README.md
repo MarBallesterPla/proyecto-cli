@@ -1,5 +1,9 @@
 # buscafeina
 
+[![CI](https://github.com/MarBallesterPla/proyecto-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/MarBallesterPla/proyecto-cli/actions/workflows/ci.yml)
+[![release](https://img.shields.io/github/v/release/MarBallesterPla/proyecto-cli)](https://github.com/MarBallesterPla/proyecto-cli/releases)
+[![Python ≥3.10](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
+
 CLI per a buscar, avaluar i ordenar ofertes de feina des del terminal, en
 valencià. Consultes a sis cercadors (Labora, SEPE, InfoJobs, Turijobs, Pacte
 Comarcal i LinkedIn), accions predefinides definides en un JSON extern, IA
@@ -10,15 +14,15 @@ local (Ollama) per a puntuar ofertes, i mode simulació per a tot.
 Amb `uv` (recomanat) o `pipx`, des del repositori de GitHub:
 
 ```powershell
-uv tool install git+https://github.com/TU-USUARI/proyecto-cli.git
-# o bé: pipx install git+https://github.com/TU-USUARI/proyecto-cli.git
+uv tool install git+https://github.com/MarBallesterPla/proyecto-cli.git
+# o bé: pipx install git+https://github.com/MarBallesterPla/proyecto-cli.git
 buscafeina accions          # queda disponible com a comando en qualsevol carpeta
 ```
 
 En mode desenvolupament, des d'una còpia local:
 
 ```powershell
-git clone https://github.com/TU-USUARI/proyecto-cli.git && cd proyecto-cli
+git clone https://github.com/MarBallesterPla/proyecto-cli.git && cd proyecto-cli
 pip install -e ".[dev]"
 ```
 
