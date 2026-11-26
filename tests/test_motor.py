@@ -150,3 +150,35 @@ def test_moure_no_sobreescriu(tmp_path):
     nou = _sense_colisio(dest, Path("feina.csv"))
     assert nou != dest / "feina.csv"
     assert nou.name.startswith("feina-")
+
+
+# --------------------------------------------------- IA amb proveïdor simulat
+
+def test_accio_avaluar_amb_proveidor_simulat(tmp_path, ctx, ofertes_planes, proveidor_fals):
+    """Camí feliç d'IA: el proveïdor simulat puntua, ordena i l'acció escriu el rànquing."""
+    proveidor_fals["proveidor"].resposta = json.dumps({
+        "avaluacions": [
+            {"id": 1, "puntuacio": 9, "motiu": "encaixa amb el perfil"},
+            {"id": 2, "puntuacio": 4, "motiu": "lluny del perfil"},
+            {"id": 3, "puntuacio": 7, "motiu": "acceptable"},
+        ]
+    })
+    ctx["ofertes"] = ofertes_planes
+    missatge = _accio(efecte="avaluar", requereix_ia=True).executar(ctx)
+    assert proveidor_fals["proveidor"].crides  # el proveïdor s'ha cridat de veritat
+    assert "Avaluades 3 ofertes" in missatge
+    assert "9/10" in missatge  # el resum comença per la millor (ordenació descendent)
+    fitxers = list(Path(tmp_path).glob("avaluades-*.csv"))
+    assert len(fitxers) == 1
+    contingut = fitxers[0].read_text(encoding="utf-8-sig")
+    assert "encaixa amb el perfil" in contingut  # el motiu arriba al CSV
+
+
+def test_accio_filtrar_amb_proveidor_simulat(ctx, ofertes_planes, proveidor_fals):
+    """Camí feliç d'IA: la IA descarta l'oferta 2 i l'acció en deixa 2 de 3."""
+    proveidor_fals["proveidor"].resposta = json.dumps({"descartats": [2]})
+    ctx["ofertes"] = ofertes_planes
+    missatge = _accio(efecte="filtrar", requereix_ia=True).executar(ctx)
+    assert "Filtrades 3 ofertes" in missatge
+    assert "en queden 2" in missatge
+    assert len(ctx["ofertes"]) == 2  # la descartada és l'índex 1 (id 2)

@@ -23,6 +23,8 @@ IA es salten amb un missatge que explica què falta (servidor parat, model no
 descarregat amb la comanda per a baixar-lo, o variable d'entorn absent) i la
 seqüència continua amb la resta d'accions. Així el mode sense xarxa i sense
 Ollama funciona: cerca, exportar, neteja i arxiu no depenen de l'IA.
+Les proves substitueixen la fàbrica per un proveïdor simulat i apunten la IA
+a un port mort (cas caigut): cap test necessita internet.
 
 ## Conseqüències
 

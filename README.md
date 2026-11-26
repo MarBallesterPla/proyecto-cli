@@ -165,12 +165,13 @@ pip install -e ".[dev]"
 pytest tests -v
 ```
 
-36 proves amb pytest, **totes en carpetes temporals** (`tmp_path`) — mai sobre
+38 proves amb pytest, **totes en carpetes temporals** (`tmp_path`) — mai sobre
 fitxers reals:
 
 - Camí feliç: càrrega de l'`accions.json` de exemple, cerca en simulació,
   exportació que informa del fitxer creat, neteja simulada, configuració
-  vàlida, parseig de respostes brutes de la IA, analitzadors de SEPE i
+  vàlida, parseig de respostes brutes de la IA, **les dues accions amb IA
+  (avaluar i filtrar) amb el proveïdor simulat**, analitzadors de SEPE i
   Turijobs amb HTML fixt (sense xarxa).
 - Casos feos: JSON roto, JSON amb camps que falten o efectes inventats, config
   amb tipus equivocat, portal desconegut, acció destructiva sense confirmar

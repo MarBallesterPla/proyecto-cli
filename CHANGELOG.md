@@ -13,6 +13,8 @@ adherit a [Versionat Semàntic](https://semver.org/lang/ca/).
   `--guardar no` no escriu cap fitxer.
 - Prova del nom dels fitxers d'exportació: confirma que porta segons
   (HHMMSS).
+- Proves del camí feliç de les dues accions amb IA (`avaluar-perfil` i
+  `filtrar-descart`) amb un proveïdor simulat: 38 proves en total.
 
 ### Corregit
 
