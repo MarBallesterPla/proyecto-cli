@@ -16,20 +16,27 @@ Amb `uv` (recomanat) o `pipx`, des del repositori de GitHub:
 ```powershell
 uv tool install git+https://github.com/MarBallesterPla/proyecto-cli.git
 # o bé: pipx install git+https://github.com/MarBallesterPla/proyecto-cli.git
-buscafeina accions          # queda disponible com a comando en qualsevol carpeta
+buscafeina accions          # queda disponible com a comanda en qualsevol carpeta
 ```
 
-> **Nota (uv):** el executable es posa a `%USERPROFILE%\.local\bin`. Si `uv`
-> avisa que eixa carpeta no està al `PATH`, obri una finestra nova després
-> d'afegir-la (Environament del sistema → variables d'entorn de l'usuari →
-> `Path`), perquè `buscafeina` es resolga des de qualsevol carpeta. Verificable
-> amb `Get-Command buscafeina`: ha de tornar la ruta de `.local\bin`, no una
-> instal·lació editable antiga.
+Si no tens `uv`, instal·la'l primer (`python -m pip install uv`) o amb
+l'script oficial d'Astral. Per a actualitzar després d'una versió nova:
+`uv tool upgrade buscafeina`. Per a desinstal·lar: `uv tool uninstall buscafeina`.
 
-En mode desenvolupament, des d'una còpia local:
+> **Nota (uv):** el executable es posa a `%USERPROFILE%\.local\bin`. Si `uv`
+> avisa que eixa carpeta no està al `PATH`, afig-la tu: `Propietats del
+> sistema → Configuració avançada → Variables d'entorn` (botó), `Path` de les
+> variables de l'usuari → `Nova` → `%USERPROFILE%\.local\bin`, i obri després
+> una finestra de PowerShell **nova** perquè `buscafeina` es resolga des de
+> qualsevol carpeta. Verificable amb `Get-Command buscafeina`: ha de tornar la
+> ruta de `.local\bin`, no una instal·lació editable antiga.
+
+En mode desenvolupament, des d'una còpia local (en PowerShell, cada ordre
+en la seua línia):
 
 ```powershell
-git clone https://github.com/MarBallesterPla/proyecto-cli.git && cd proyecto-cli
+git clone https://github.com/MarBallesterPla/proyecto-cli.git
+cd proyecto-cli
 pip install -e ".[dev]"
 ```
 
@@ -42,7 +49,7 @@ Requereix Python ≥ 3.10. Depèn de `requests`, `rich`, `questionary`,
 buscafeina cerca -k "cambrer/a" -l "València" --guardar ambdos --no-browser
 buscafeina tot   -k fuster -l Xàtiva --limit 15          # cerca + exporta + avalua
 buscafeina avalua                                        # el fitxer més recent de resultats/
-buscafeina avalua resultats/feina-panadero-valencia-20261110-1403.csv --filtrar
+buscafeina avalua resultats/feina-panadero-valencia-<data>.csv --filtrar  # un concret
 buscafeina neteja --simulacio                            # què esborraria (no res)
 buscafeina neteja --si                                   # esborra de veritat
 buscafeina accions                                       # les accions definides i el seu esquema
@@ -117,7 +124,7 @@ Efectes disponibles (cada un és una classe en `buscafeina/acciones.py`):
 
 **Afegir una acció no exigeix tocar el codi**: copia una entrada, canvia
 `nom`, `comandos`, `despres` i `params`, i ja eixix en `buscafeina accions`
-i en els comandaments que hages dit. La justificació d'este disseny i les
+i en les comandes que hages dit. La justificació d'este disseny i les
 alternatives descartades estan en [`docs/adr/ADR-001`](docs/adr/ADR-001-configuracio-externa.md).
 
 ## IA i secrets
