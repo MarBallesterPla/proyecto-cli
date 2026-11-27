@@ -11,30 +11,82 @@ local (Ollama) per a puntuar ofertes, i mode simulació per a tot.
 
 ## Instal·lació
 
-Amb `uv` (recomanat) o `pipx`, des del repositori de GitHub:
+buscafeina és una eina de **línia d'ordres** (escrius comandes en una
+terminal). Funciona en **Windows, macOS i Linux** i només necessita
+**Python 3.10 o superior**. En quatre passos la tens:
+
+### Pas 1 — Obri la terminal
+
+| Sistema | Com obrir-la |
+| --- | --- |
+| Windows | Tecla `Windows` → escriu `Terminal` → Intro |
+| macOS | `Cmd + Espai` → escriu `Terminal` → Intro |
+| Linux | `Ctrl + Alt + T` (a la majoria de distribucions) |
+
+### Pas 2 — Instal·la `uv`
+
+`uv` és el gestor que instal·la buscafeina. Tria la comanda del teu sistema:
 
 ```powershell
-uv tool install git+https://github.com/MarBallesterPla/proyecto-cli.git
-# o bé: pipx install git+https://github.com/MarBallesterPla/proyecto-cli.git
-buscafeina accions          # queda disponible com a comanda en qualsevol carpeta
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-Si no tens `uv`, instal·la'l primer (`python -m pip install uv`) o amb
-l'script oficial d'Astral. Per a actualitzar després d'una versió nova:
-`uv tool upgrade buscafeina`. Per a desinstal·lar: `uv tool uninstall buscafeina`.
+```bash
+# macOS i Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
 
-> **Nota (uv):** el executable es posa a `%USERPROFILE%\.local\bin`. Si `uv`
-> avisa que eixa carpeta no està al `PATH`, afig-la tu: `Propietats del
-> sistema → Configuració avançada → Variables d'entorn` (botó), `Path` de les
-> variables de l'usuari → `Nova` → `%USERPROFILE%\.local\bin`, i obri després
-> una finestra de PowerShell **nova** perquè `buscafeina` es resolga des de
-> qualsevol carpeta. Verificable amb `Get-Command buscafeina`: ha de tornar la
-> ruta de `.local\bin`, no una instal·lació editable antiga.
+Ja tens `uv`? Vés al pas 3. (També val `python -m pip install uv` o
+`winget install astral-sh.uv` en Windows.)
 
-En mode desenvolupament, des d'una còpia local (en PowerShell, cada ordre
-en la seua línia):
+### Pas 3 — Instal·la buscafeina
 
-```powershell
+Mateixa comanda en tots els sistemes:
+
+```text
+uv tool install git+https://github.com/MarBallesterPla/proyecto-cli.git
+```
+
+(Alternativa amb `pipx`: `pipx install git+https://github.com/MarBallesterPla/proyecto-cli.git`.)
+
+### Pas 4 — Comprova que funciona
+
+```text
+buscafeina accions
+```
+
+Ha d'eixir la taula amb les accions disponibles. Ja queda com a **comanda en
+qualsevol carpeta** d'eixe ordinador.
+
+**Provar sense instal·lar** (es baixa i executa una vegada, sense deixar res):
+
+```text
+uvx --from "git+https://github.com/MarBallesterPla/proyecto-cli" buscafeina accions
+```
+
+### Si la terminal diu que no troba `buscafeina`
+
+L'executable s'instal·la en una carpeta que pot no estar al `PATH`:
+
+- **Windows**: afig `%USERPROFILE%\.local\bin` al `Path` de l'usuari
+  (`Propietats del sistema → Configuració avançada → Variables d'entorn`,
+  `Path` de les variables de l'usuari → `Nova`) i obri una finestra de
+  terminal **nova**. Verifica amb `Get-Command buscafeina`.
+- **macOS i Linux**: afig esta línia al final de `~/.zshrc` (macOS) o
+  `~/.bashrc` (Linux) i obri una terminal nova:
+  `export PATH="$HOME/.local/bin:$PATH"`. Verifica amb `which buscafeina`.
+
+### Actualitzar i desinstal·lar
+
+```text
+uv tool upgrade buscafeina     # passar a l'última versió
+uv tool uninstall buscafeina   # llevar-lo del teu ordinador
+```
+
+### Mode desenvolupament (còpia local)
+
+```text
 git clone https://github.com/MarBallesterPla/proyecto-cli.git
 cd proyecto-cli
 pip install -e ".[dev]"
@@ -43,9 +95,19 @@ pip install -e ".[dev]"
 Requereix Python ≥ 3.10. Depèn de `requests`, `rich`, `questionary`,
 `beautifulsoup4` i `jsonschema`.
 
+### En mòbils i tauletes?
+
+- **Android**: es pot provar amb l'app **Termux** (una terminal):
+  `pkg install python git` i després la mateixa comanda `pip install
+  git+https://…`. És un ús avançat i no l'hem provat: recomanat per a
+  ordinador.
+- **iPhone i iPad**: **no es pot**. iOS no deixa executar programes de
+  terminal ni baixar Python de manera independent (només apps amb Python
+  integrat, que no poden instal·lar esta eina). Cal un ordinador.
+
 ## Ús
 
-```powershell
+```text
 buscafeina cerca -k "cambrer/a" -l "València" --guardar ambdos --no-browser
 buscafeina tot   -k fuster -l Xàtiva --limit 15          # cerca + exporta + avalua
 buscafeina avalua                                        # el fitxer més recent de resultats/
@@ -167,7 +229,7 @@ Els tipus es validen: un número on va text produeix
 
 ## Proves
 
-```powershell
+```text
 pip install -e ".[dev]"
 pytest tests -v
 ```
@@ -199,6 +261,30 @@ Python 3.10 i 3.12 a cada push i PR.
 - Labora requereix DNI + PIN; la CLI no guarda credencials.
 - La qualitat de l'avaluació depén del model local; amb models xicotets el
   format JSON pot tindre soroll — el parseig ho tolera, i si no, avisar.
+
+## Preguntes freqüents
+
+**Hi ha un executable?**
+Sí, però no és un programa de doble clic amb finestra: és una eina de línia
+d'ordres. En instal·lar-la, `buscafeina` queda com a comanda executable
+(`buscafeina.exe` en Windows, `buscafeina` en macOS/Linux) que s'escriu en
+una terminal, igual que `git` o `python`. Si prefereixes no instal·lar res,
+també es pot executar a volada amb `uvx --from
+"git+https://github.com/MarBallesterPla/proyecto-cli" buscafeina accions`.
+
+**Es pot usar en un mòbil o una tauleta?**
+En Android sí, amb l'app **Termux** (ús avançat, veure l'apartat
+d'instal·lació). En iPhone i iPad **no**: iOS no permet executar programes
+de terminal. El seu ús previst és l'ordinador (Windows, macOS o Linux).
+
+**Necessita internet?**
+Només per a instal·lar i per a consultar els portals. La simulació
+(`--simulacio`) i l'avaluació amb IA local (Ollama) funcionen sense
+connexió.
+
+**No sé programar, puc fer-ho servir?**
+Sí. Cal copiar i pegar comandes de la secció [Ús](#ús); no cal escriure
+codi. L'única decisió tècnica és triar un perfil per a l'avaluació amb IA.
 
 ## Autor
 
